@@ -14,16 +14,16 @@ struct OnboardingView: View {
         VStack(spacing: 40) {
             Spacer()
             
-            Image(systemName: "star.fill")
+            Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 100))
-                .foregroundStyle(.yellow)
+                .foregroundStyle(.green)
             
             VStack(spacing: 20) {
-                Text("Welcome to App")
+                Text("Welcome to Habit Tracker")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
-                Text("Experience the best features with our premium subscription")
+                Text("Build better habits, track your progress, and transform your daily routine into success")
                     .font(.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)

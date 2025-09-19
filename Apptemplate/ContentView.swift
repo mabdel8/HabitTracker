@@ -9,57 +9,30 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var storeManager: StoreManager
-    @State private var showPaywall = false
+    @StateObject private var habitManager: HabitManager
+    
+    init() {
+        // Initialize with a temporary ModelContext that will be replaced in onAppear
+        let container = try! ModelContainer(for: Habit.self, HabitEntry.self)
+        let context = ModelContext(container)
+        self._habitManager = StateObject(wrappedValue: HabitManager(modelContext: context))
+    }
     
     var body: some View {
-        VStack(spacing: 40) {
-            Spacer()
-            
-            VStack(spacing: 20) {
-                Image(systemName: storeManager.isSubscribed ? "crown.fill" : "person.circle.fill")
-                    .font(.system(size: 80))
-                    .foregroundStyle(storeManager.isSubscribed ? .yellow : .gray)
-                
-                Text(storeManager.isSubscribed ? "Premium Account" : "Free Account")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text(storeManager.isSubscribed ? "Enjoy unlimited access to all features" : "Upgrade to unlock all features")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+        MainTabView()
+            .environmentObject(habitManager)
+            .onAppear {
+                // Update the habit manager with the actual model context from the environment
+                habitManager.modelContext = modelContext
+                habitManager.loadHabits()
             }
-            
-            Spacer()
-            
-            if !storeManager.isSubscribed {
-                Button(action: {
-                    showPaywall = true
-                }) {
-                    Text("Upgrade to Premium")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(12)
-                }
-                .padding(.horizontal, 40)
-            }
-        }
-        .sheet(isPresented: $showPaywall) {
-            PaywallView(isPresented: $showPaywall)
-                .environmentObject(storeManager)
-        }
-        .task {
-            await storeManager.updateSubscriptionStatus()
-        }
     }
 }
 
 #Preview {
     ContentView()
         .environmentObject(StoreManager())
+        .modelContainer(for: [Habit.self, HabitEntry.self])
 }

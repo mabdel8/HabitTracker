@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct ApptemplateApp: App {
@@ -30,6 +31,7 @@ struct ApptemplateApp: App {
             } else {
                 ContentView()
                     .environmentObject(storeManager)
+                    .modelContainer(for: [Habit.self, HabitEntry.self])
                     .sheet(isPresented: $showPaywall) {
                         PaywallView(isPresented: $showPaywall)
                             .environmentObject(storeManager)
