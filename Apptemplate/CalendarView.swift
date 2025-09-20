@@ -503,8 +503,8 @@ struct ContributionGraph: View {
         return weeks
     }
     
+    
     var body: some View {
-        // Just the scrollable contribution grid - no labels
         ScrollViewReader { scrollProxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 3) {
@@ -523,9 +523,9 @@ struct ContributionGraph: View {
                         .id("week_\(weekIndex)")
                     }
                 }
-                .padding(.horizontal, 12) // Padding to prevent cutoff
+                .padding(.horizontal, 12)
             }
-            .clipped() // Prevent overflow outside bounds
+            .clipped()
             .onAppear {
                 // Scroll to show the current week on the right side
                 if !weeksData.isEmpty {
@@ -539,6 +539,7 @@ struct ContributionGraph: View {
             }
         }
     }
+    
 }
 
 // MARK: - Contribution Square Component
