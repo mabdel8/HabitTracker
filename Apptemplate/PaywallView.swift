@@ -26,9 +26,9 @@ struct PaywallView: View {
     }
     
     private let testimonials = [
-        Testimonial(text: "Love tracking my reading stats and competing with friends. Makes reading so much more fun!", author: "Emma L."),
-        Testimonial(text: "The AI-powered features help me discover books I never would have found otherwise.", author: "David M."),
-        Testimonial(text: "Finally hit my reading goals thanks to the smart reminders and progress tracking.", author: "Sarah K.")
+        Testimonial(text: "Finally built the habits I've always wanted! The visual progress tracking keeps me motivated.", author: "Emma L."),
+        Testimonial(text: "The calendar heat map shows my consistency at a glance. It's incredibly satisfying to see my streaks!", author: "David M."),
+        Testimonial(text: "I've never been this consistent with my habits. The app makes it so easy to track and stay accountable.", author: "Sarah K.")
     ]
     
     // MARK: - Body
@@ -65,19 +65,24 @@ struct PaywallView: View {
     
     // MARK: - View Components
     private var appIconSection: some View {
-        Image("applogo")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: Constants.appIconSize, height: Constants.appIconSize)
-            .cornerRadius(16)
-            .padding(.top, 20)
+        ZStack {
+            Circle()
+                .fill(Color.purple.opacity(0.15))
+                .frame(width: Constants.appIconSize, height: Constants.appIconSize)
+            
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(.purple)
+        }
+        .padding(.top, 20)
     }
     
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FeatureRow(icon: "books.vertical.fill", text: "Unlimited Books")
-            FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "Advanced Statistics")
-            FeatureRow(icon: "sparkles", text: "AI-Powered Features")
+            FeatureRow(icon: "infinity", text: "Unlimited Habits")
+            FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "Advanced Analytics")
+            FeatureRow(icon: "calendar", text: "Calendar & Heat Maps")
+            FeatureRow(icon: "bell.fill", text: "Smart Reminders")
         }
         .padding(.horizontal, 24)
     }
