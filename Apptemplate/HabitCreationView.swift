@@ -47,15 +47,25 @@ struct HabitCreationView: View {
     }
     
     private var templatesView: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                headerSection
-                
-                templatesSection
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    headerSection
+                    
+                    templatesSection
+                }
+                .padding()
+                .padding(.bottom, 100) // Add padding for fixed button
+            }
+            
+            // Fixed bottom button
+            VStack {
+                Divider()
                 
                 customOptionSection
+                    .padding()
             }
-            .padding()
+            .background(Color(.systemBackground))
         }
         .navigationTitle("Add Habit")
         .navigationBarTitleDisplayMode(.large)
@@ -70,14 +80,6 @@ struct HabitCreationView: View {
     
     private var headerSection: some View {
         VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 40))
-                .foregroundStyle(.blue)
-            
-            Text("Choose a habit to track")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
             Text("Start with a popular habit or create your own")
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -97,25 +99,21 @@ struct HabitCreationView: View {
     }
     
     private var customOptionSection: some View {
-        VStack(spacing: 16) {
-            Divider()
-            
-            Button(action: {
-                showingTemplates = false
-            }) {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                    
-                    Text("Create Custom Habit")
-                        .font(.headline)
-                }
-                .foregroundStyle(.blue)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(12)
+        Button(action: {
+            showingTemplates = false
+        }) {
+            HStack {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                
+                Text("Create Custom Habit")
+                    .font(.headline)
             }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color.purple)
+            .cornerRadius(12)
         }
     }
     
@@ -233,12 +231,22 @@ struct TemplateCard: View {
     let template: HabitTemplate
     let action: () -> Void
     
+    private var templateColor: Color {
+        Color(hex: template.color) ?? .blue
+    }
+    
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
-                Image(systemName: template.icon)
-                    .font(.system(size: 32))
-                    .foregroundStyle(Color(hex: template.color) ?? .blue)
+                ZStack {
+                    Circle()
+                        .fill(templateColor.opacity(0.15))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: template.icon)
+                        .font(.system(size: 28))
+                        .foregroundStyle(templateColor)
+                }
                 
                 Text(template.name)
                     .font(.headline)
@@ -251,8 +259,9 @@ struct TemplateCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
+            .background(Color(.systemBackground))
+            .cornerRadius(20)
+            .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
