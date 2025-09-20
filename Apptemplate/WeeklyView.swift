@@ -47,7 +47,7 @@ struct WeeklyView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 12) {
                     weekNavigationSection
                     
                     if habitManager.habits.isEmpty {
@@ -56,7 +56,7 @@ struct WeeklyView: View {
                         weeklyGridSection
                     }
                 }
-                .padding()
+                .padding(16)
             }
             .navigationTitle("Weekly")
         }
@@ -111,13 +111,14 @@ struct WeeklyView: View {
                 }
             }
         }
-        .padding()
+        .padding(14)
         .background(Color(.systemGray6))
-        .cornerRadius(16)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     private var weeklyGridSection: some View {
-        VStack(spacing: 16) {
+        LazyVStack(spacing: 12) {
             ForEach(habitManager.habits, id: \.id) { habit in
                 WeeklyHabitRow(habit: habit, weekDates: weekDates)
                     .environmentObject(habitManager)
@@ -164,11 +165,17 @@ struct WeeklyHabitRow: View {
     var body: some View {
         VStack(spacing: 12) {
             // Habit header
-            HStack {
-                Image(systemName: habit.icon)
-                    .font(.title3)
-                    .foregroundStyle(progressColor)
-                    .frame(width: 24)
+            HStack(spacing: 14) {
+                // Icon in tinted circle
+                ZStack {
+                    Circle()
+                        .fill(progressColor.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: habit.icon)
+                        .font(.title3)
+                        .foregroundStyle(progressColor)
+                }
                 
                 Text(habit.name)
                     .font(.headline)
@@ -193,10 +200,10 @@ struct WeeklyHabitRow: View {
                 }
             }
         }
-        .padding()
+        .padding(14)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     private var weekCompletedDays: Int {
