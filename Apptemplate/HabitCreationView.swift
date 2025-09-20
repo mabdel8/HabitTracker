@@ -138,6 +138,7 @@ struct HabitCreationView: View {
                         }
                     }
                     .pickerStyle(.menu)
+                    .padding(.leading, 60)
                 }
             }
             
@@ -156,7 +157,7 @@ struct HabitCreationView: View {
                                         .font(.title2)
                                         .foregroundStyle(customIcon == icon ? .white : .primary)
                                         .frame(width: 44, height: 44)
-                                        .background(customIcon == icon ? Color.blue : Color(.systemGray6))
+                                        .background(customIcon == icon ? (Color(hex: customColor) ?? .blue) : Color(.systemGray6))
                                         .cornerRadius(8)
                                 }
                             }
@@ -177,15 +178,16 @@ struct HabitCreationView: View {
                                 }) {
                                     Circle()
                                         .fill(Color(hex: color) ?? .blue)
-                                        .frame(width: 32, height: 32)
+                                        .frame(width: 28, height: 28)
                                         .overlay(
                                             Circle()
-                                                .stroke(customColor == color ? Color.primary : Color.clear, lineWidth: 3)
+                                                .stroke(customColor == color ? Color.primary : Color.clear, lineWidth: 2)
                                         )
                                 }
                             }
                         }
-                        .padding(.horizontal, 1)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
                 }
             }

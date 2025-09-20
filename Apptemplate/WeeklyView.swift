@@ -243,16 +243,18 @@ struct WeeklyProgressDot: View {
             ZStack {
                 // Background circle
                 Circle()
-                    .fill(Color(.systemGray6))
+                    .fill(isCompleted ? color : Color(.systemGray6))
                     .frame(width: 36, height: 36)
                 
                 // Progress circle
                 if !isFuture {
-                    Circle()
-                        .trim(from: 0, to: progress)
-                        .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                        .frame(width: 36, height: 36)
-                        .rotationEffect(.degrees(-90))
+                    if !isCompleted {
+                        Circle()
+                            .trim(from: 0, to: progress)
+                            .stroke(color, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: 36, height: 36)
+                            .rotationEffect(.degrees(-90))
+                    }
                     
                     // Completion indicator
                     if isCompleted {

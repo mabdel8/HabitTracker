@@ -258,6 +258,7 @@ struct HabitEditView: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        .padding(.leading, 60)
                     }
                 }
                 
@@ -276,7 +277,7 @@ struct HabitEditView: View {
                                             .font(.title2)
                                             .foregroundStyle(icon == iconName ? .white : .primary)
                                             .frame(width: 44, height: 44)
-                                            .background(icon == iconName ? Color.blue : Color(.systemGray6))
+                                            .background(icon == iconName ? (Color(hex: color) ?? .blue) : Color(.systemGray6))
                                             .cornerRadius(8)
                                     }
                                 }
@@ -297,15 +298,16 @@ struct HabitEditView: View {
                                     }) {
                                         Circle()
                                             .fill(Color(hex: colorHex) ?? .blue)
-                                            .frame(width: 32, height: 32)
+                                            .frame(width: 28, height: 28)
                                             .overlay(
                                                 Circle()
-                                                    .stroke(color == colorHex ? Color.primary : Color.clear, lineWidth: 3)
+                                                    .stroke(color == colorHex ? Color.primary : Color.clear, lineWidth: 2)
                                             )
                                     }
                                 }
                             }
-                            .padding(.horizontal, 1)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
                         }
                     }
                 }
