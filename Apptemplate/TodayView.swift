@@ -24,7 +24,7 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 12) {
                     headerSection
                     
                     if habitManager.habits.isEmpty {
@@ -33,7 +33,7 @@ struct TodayView: View {
                         habitsSection
                     }
                 }
-                .padding()
+                .padding(16)
             }
             .navigationTitle("Today")
             .toolbar {
@@ -80,9 +80,10 @@ struct TodayView: View {
                 progressBar
             }
         }
-        .padding()
+        .padding(14)
         .background(Color(.systemGray6))
-        .cornerRadius(16)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     private var progressRing: some View {
@@ -108,17 +109,9 @@ struct TodayView: View {
     
     private var progressBar: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("\(completedCount) of \(totalCount) completed")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                Text("\(Int((Double(completedCount) / Double(totalCount)) * 100))%")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-            }
+            Text("\(completedCount) of \(totalCount) completed")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             
             ProgressView(value: Double(completedCount), total: Double(totalCount))
                 .progressViewStyle(LinearProgressViewStyle(tint: .green))
@@ -178,15 +171,20 @@ struct HabitRowView: View {
     }
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon
-            Image(systemName: habit.icon)
-                .font(.title2)
-                .foregroundStyle(progressColor)
-                .frame(width: 32, height: 32)
+        HStack(spacing: 14) {
+            // Icon in tinted circle
+            ZStack {
+                Circle()
+                    .fill(progressColor.opacity(0.15))
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: habit.icon)
+                    .font(.title3)
+                    .foregroundStyle(progressColor)
+            }
             
             // Habit info and progress
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(habit.name)
                         .font(.headline)
@@ -244,15 +242,15 @@ struct HabitRowView: View {
                 }
             }
         }
-        .padding()
+        .padding(14)
         .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
         .overlay(
             // Completion animation overlay
             ZStack {
                 if showCompletionAnimation {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(progressColor.opacity(0.3))
                         .scaleEffect(showCompletionAnimation ? 1.05 : 1.0)
                         .opacity(showCompletionAnimation ? 0 : 1)
