@@ -27,8 +27,8 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 16) {
-                    monthNavigationCard
+                LazyVStack(spacing: 12) {
+                    monthNavigationHeader
                     
                     if habitManager.habits.isEmpty {
                         emptyStateCard
@@ -41,8 +41,7 @@ struct CalendarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(16)
             }
             .navigationTitle("Calendar")
             .background(Color(.systemGroupedBackground))
@@ -61,51 +60,47 @@ struct CalendarView: View {
         }
     }
     
-    // MARK: - Month Navigation Card
-    private var monthNavigationCard: some View {
-        VStack {
-            HStack {
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        selectedDate = Calendar.current.date(byAdding: .month, value: -1, to: selectedDate) ?? selectedDate
-                    }
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
-                        .frame(width: 44, height: 44)
-                        .background(Color(.systemGray6))
-                        .clipShape(Circle())
+    // MARK: - Month Navigation Header
+    private var monthNavigationHeader: some View {
+        HStack {
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    selectedDate = Calendar.current.date(byAdding: .month, value: -1, to: selectedDate) ?? selectedDate
                 }
-                
-                Spacer()
-                
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.title3)
+                    .foregroundStyle(.purple)
+            }
+            
+            Spacer()
+            
+            Button(action: {
+                // TODO: Show date picker
+            }) {
                 Text(monthDisplayText)
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        selectedDate = Calendar.current.date(byAdding: .month, value: 1, to: selectedDate) ?? selectedDate
-                    }
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.title2)
-                        .foregroundStyle(.blue)
-                        .frame(width: 44, height: 44)
-                        .background(Color(.systemGray6))
-                        .clipShape(Circle())
-                }
+                    .foregroundStyle(.black)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            
+            Spacer()
+            
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    selectedDate = Calendar.current.date(byAdding: .month, value: 1, to: selectedDate) ?? selectedDate
+                }
+            }) {
+                Image(systemName: "chevron.right")
+                    .font(.title3)
+                    .foregroundStyle(.purple)
+            }
         }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Habit Selector Card
@@ -149,108 +144,96 @@ struct CalendarView: View {
     
     // MARK: - Calendar Heatmap Card
     private func calendarHeatmapCard(for habit: Habit) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Monthly Progress")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    
-                    Text("Daily habit completion this month")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Monthly Progress")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("\(monthCompletedDays(for: habit))/\(monthTotalDays)")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-                    
-                    Text("days completed")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("\(monthCompletedDays(for: habit))/\(monthTotalDays) days")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
+            .padding(14)
             
             CalendarHeatmap(habit: habit, month: currentMonth)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
         }
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Contribution Graph Card
     private func contributionGraphCard(for habit: Habit) -> some View {
-        VStack(spacing: 16) {
+        let habitColor = Color(hex: habit.color) ?? .blue
+        
+        return VStack(spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Contribution Graph")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    
-                    Text("GitHub-style activity overview")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text("Contribution Graph")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Past Year")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
+                // Color intensity key
+                HStack(spacing: 8) {
+                    Text("Less")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                     
-                    Text("365 days")
-                        .font(.caption)
+                    HStack(spacing: 2) {
+                        ForEach(0..<4) { index in
+                            Rectangle()
+                                .fill(habitColor.opacity(0.2 + (Double(index) * 0.2)))
+                                .frame(width: 8, height: 8)
+                                .cornerRadius(1)
+                        }
+                    }
+                    
+                    Text("More")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
+            .padding(14)
             
             ContributionGraph(habit: habit)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 14)
         }
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Empty State Card
     private var emptyStateCard: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.system(size: 60))
                 .foregroundStyle(.secondary)
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Text("No Habits to View")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                    .font(.headline)
                     .foregroundStyle(.primary)
                 
                 Text("Add some habits to see your calendar progress and contribution graphs")
-                    .font(.body)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
             }
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 40)
+        .padding(40)
         .frame(maxWidth: .infinity)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Helper Functions
@@ -291,22 +274,28 @@ struct HabitSelectorCard: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: habit.icon)
-                    .font(.title3)
-                    .foregroundStyle(isSelected ? .white : habitColor)
-                    .frame(width: 24, height: 24)
+            HStack(spacing: 12) {
+                // Icon in colored circle
+                ZStack {
+                    Circle()
+                        .fill(habitColor.opacity(0.15))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: habit.icon)
+                        .font(.title3)
+                        .foregroundStyle(habitColor)
+                }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(habit.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(isSelected ? .white : .primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                     
                     Text("\(habit.targetCount) \(habit.unit)")
                         .font(.caption)
-                        .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer(minLength: 0)
@@ -315,7 +304,11 @@ struct HabitSelectorCard: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? habitColor : Color(.systemGray6))
+                    .fill(Color(.systemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(isSelected ? habitColor : Color(.systemGray4), lineWidth: isSelected ? 2 : 1)
+                    )
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -350,25 +343,24 @@ struct CalendarHeatmap: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             // Weekday headers
             HStack(spacing: 0) {
-                ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
+                ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
                     Text(day)
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
             }
             
             // Calendar grid
-            LazyVGrid(columns: columns, spacing: 4) {
+            LazyVGrid(columns: columns, spacing: 2) {
                 // Empty cells for month start offset
                 ForEach(0..<startOffset, id: \.self) { _ in
                     Rectangle()
                         .fill(Color.clear)
-                        .frame(height: 36)
+                        .frame(height: 32)
                 }
                 
                 // Month dates
@@ -411,16 +403,16 @@ struct CalendarDayCell: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 6)
                 .fill(cellBackgroundColor)
-                .frame(height: 36)
+                .frame(height: 32)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(isToday ? color : Color.clear, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(isToday ? Color.purple : Color.clear, lineWidth: isToday ? 2 : 0)
                 )
             
             Text("\(Calendar.current.component(.day, from: date))")
-                .font(.caption)
+                .font(.caption2)
                 .fontWeight(isToday ? .bold : .medium)
                 .foregroundStyle(textColor)
         }
@@ -432,14 +424,26 @@ struct CalendarDayCell: View {
         } else if progress == 0 {
             return Color(.systemGray6)
         } else {
-            return color.opacity(0.2 + (progress * 0.6))
+            // 4-tint completion heat: 0%, 33%, 66%, 100%
+            let tintLevel: Double
+            if progress <= 0.25 {
+                tintLevel = 0.0
+            } else if progress <= 0.5 {
+                tintLevel = 0.33
+            } else if progress <= 0.75 {
+                tintLevel = 0.66
+            } else {
+                tintLevel = 1.0
+            }
+            
+            return color.opacity(0.16 + (tintLevel * 0.6))
         }
     }
     
     private var textColor: Color {
         if isFuture {
             return .secondary
-        } else if progress > 0.6 {
+        } else if progress > 0.75 {
             return .white
         } else {
             return .primary
