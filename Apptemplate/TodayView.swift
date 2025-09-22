@@ -168,10 +168,100 @@ struct TodayView: View {
     }
 }
 
+// MARK: - Habit Logging Sheet
+struct HabitLoggingSheet: View {
+    let habit: Habit
+    @Binding var inputValue: String
+    let onSave: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var isInputFocused: Bool
+    
+    private var progressColor: Color {
+        Color(hex: habit.color) ?? .blue
+    }
+    
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Habit info header
+                VStack(spacing: 12) {
+                    Image(systemName: habit.icon)
+                        .font(.system(size: 40))
+                        .foregroundStyle(progressColor)
+                    
+                    Text(habit.name)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                    
+                    Text("Goal: \(habit.targetCount) \(habit.unit)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 20)
+                
+                // Input section
+                VStack(spacing: 16) {
+                    Text("Enter \(habit.unit)")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    TextField("0", text: $inputValue)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(progressColor)
+                        .multilineTextAlignment(.center)
+                        .keyboardType(.numberPad)
+                        .focused($isInputFocused)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(16)
+                        .frame(maxWidth: 200)
+                }
+                
+                
+                Spacer()
+                
+                // Save button
+                Button(action: {
+                    onSave(inputValue)
+                    dismiss()
+                }) {
+                    Text("Save")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(progressColor)
+                        .cornerRadius(16)
+                }
+                .disabled(inputValue.isEmpty || Int(inputValue) == nil)
+                .padding(.horizontal)
+                .padding(.bottom, 20)
+            }
+            .navigationTitle("Log Progress")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .onAppear {
+            isInputFocused = true
+        }
+    }
+}
+
 struct HabitRowView: View {
     let habit: Habit
     @EnvironmentObject var habitManager: HabitManager
     @State private var showCompletionAnimation = false
+    @State private var showLoggingSheet = false
+    @State private var inputValue = ""
+    @State private var dragOffset = CGSize.zero
+    @State private var isDragging = false
     
     private var progressColor: Color {
         Color(hex: habit.color) ?? .blue
@@ -194,60 +284,35 @@ struct HabitRowView: View {
                     
                     Spacer()
                     
-                    Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    // Tappable count display
+                    Button(action: {
+                        inputValue = "\(habit.todayCount)"
+                        showLoggingSheet = true
+                    }) {
+                        Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white)
+                    }
                 }
                 
                 ProgressView(value: habit.todayProgress)
                     .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
             }
             
-            // Controls
-            HStack(spacing: 12) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        habitManager.decrementHabit(habit)
-                    }
-                    
-                    // Haptic feedback
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
-                }) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(habit.todayCount > 0 ? progressColor : Color(.systemGray4))
-                        .scaleEffect(habit.todayCount > 0 ? 1.0 : 0.8)
-                        .animation(.spring(response: 0.3), value: habit.todayCount)
-                }
-                .disabled(habit.todayCount == 0)
-                
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        habitManager.incrementHabit(habit)
-                    }
-                    
-                    // Haptic feedback - stronger for completion
-                    if habit.todayCount + 1 >= habit.targetCount {
-                        let notificationFeedback = UINotificationFeedbackGenerator()
-                        notificationFeedback.notificationOccurred(.success)
-                    } else {
-                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                        impactFeedback.impactOccurred()
-                    }
-                }) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(progressColor)
-                        .scaleEffect(1.0)
-                        .animation(.spring(response: 0.3), value: habit.todayCount)
-                }
-            }
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color(.systemGray5), lineWidth: 0.5)
+                )
+        )
+        .scaleEffect(isDragging ? 1.02 : 1.0)
+        .offset(dragOffset)
         .overlay(
             // Completion animation overlay
             ZStack {
@@ -257,8 +322,92 @@ struct HabitRowView: View {
                         .scaleEffect(showCompletionAnimation ? 1.05 : 1.0)
                         .opacity(showCompletionAnimation ? 0 : 1)
                 }
+                
+                // Swipe feedback indicators in empty space
+                if isDragging && abs(dragOffset.width) > 50 {
+                    HStack {
+                        if dragOffset.width > 0 {
+                            // Left side feedback
+                            VStack(spacing: 2) {
+                                Circle()
+                                    .fill(progressColor)
+                                    .frame(width: 8, height: 8)
+                                Circle()
+                                    .fill(progressColor.opacity(0.6))
+                                    .frame(width: 6, height: 6)
+                                Circle()
+                                    .fill(progressColor.opacity(0.3))
+                                    .frame(width: 4, height: 4)
+                            }
+                            .opacity(min(dragOffset.width / 100.0, 1.0))
+                            .padding(.leading, 20)
+                        }
+                        
+                        Spacer()
+                        
+                        if dragOffset.width < 0 {
+                            // Right side feedback
+                            VStack(spacing: 2) {
+                                Circle()
+                                    .fill(progressColor.opacity(0.3))
+                                    .frame(width: 4, height: 4)
+                                Circle()
+                                    .fill(progressColor.opacity(0.6))
+                                    .frame(width: 6, height: 6)
+                                Circle()
+                                    .fill(progressColor)
+                                    .frame(width: 8, height: 8)
+                            }
+                            .opacity(min(abs(dragOffset.width) / 100.0, 1.0))
+                            .padding(.trailing, 20)
+                        }
+                    }
+                }
             }
         )
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    withAnimation(.spring(response: 0.3)) {
+                        dragOffset = value.translation
+                        isDragging = true
+                    }
+                }
+                .onEnded { value in
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                        dragOffset = .zero
+                        isDragging = false
+                    }
+                    
+                    // Any swipe opens the logging page
+                    if abs(value.translation.width) > 50 {
+                        inputValue = "\(habit.todayCount)"
+                        showLoggingSheet = true
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                    }
+                }
+        )
+        .onTapGesture {
+            inputValue = "\(habit.todayCount)"
+            showLoggingSheet = true
+        }
+        .sheet(isPresented: $showLoggingSheet) {
+            HabitLoggingSheet(
+                habit: habit,
+                inputValue: $inputValue,
+                onSave: { value in
+                    if let count = Int(value) {
+                        habitManager.setHabitCount(habit, count: count)
+                        
+                        if count >= habit.targetCount {
+                            let notificationFeedback = UINotificationFeedbackGenerator()
+                            notificationFeedback.notificationOccurred(.success)
+                        }
+                    }
+                }
+            )
+        }
         .onChange(of: habit.isCompletedToday) { _, isCompleted in
             if isCompleted {
                 withAnimation(.easeOut(duration: 0.6)) {
