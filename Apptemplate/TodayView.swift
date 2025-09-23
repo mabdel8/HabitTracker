@@ -338,37 +338,47 @@ struct HabitRowView: View {
             .padding(.horizontal, 8)
             
             // Main habit card content
-            HStack(spacing: 16) {
-                // Icon
-                Image(systemName: habit.icon)
-                    .font(.title2)
-                    .foregroundStyle(progressColor)
-                    .frame(width: 32, height: 32)
-                
-                // Habit info and progress
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text(habit.name)
-                            .font(.headline)
-                            .foregroundStyle(.primary)
-                        
-                        Spacer()
-                        
-                        // Tappable count display - plain white text
-                        Button(action: {
-                            inputValue = "\(habit.todayCount)"
-                            showLoggingSheet = true
-                        }) {
-                            Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.white)
-                        }
-                    }
+            VStack(spacing: 12) {
+                HStack(spacing: 16) {
+                    // Icon
+                    Image(systemName: habit.icon)
+                        .font(.title2)
+                        .foregroundStyle(progressColor)
+                        .frame(width: 32, height: 32)
                     
-                    ProgressView(value: habit.todayProgress)
-                        .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
+                    // Habit info and progress
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(habit.name)
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            
+                            Spacer()
+                            
+                            // Tappable count display - plain white text
+                            Button(action: {
+                                inputValue = "\(habit.todayCount)"
+                                showLoggingSheet = true
+                            }) {
+                                Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        
+                        ProgressView(value: habit.todayProgress)
+                            .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
+                    }
                 }
+                
+                // Horizontal divider
+                Divider()
+                    .background(Color(.systemGray4))
+                
+                // Yearly contribution graph
+                ContributionGraph(habit: habit)
+                    .frame(height: 60)
             }
             .padding()
             .background(
@@ -384,12 +394,19 @@ struct HabitRowView: View {
         .scaleEffect(isDragging ? 0.98 : 1.0)
         .offset(dragOffset)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
-        .gesture(
+        .simultaneousGesture(
             DragGesture()
                 .onChanged { value in
-                    withAnimation(.spring(response: 0.3)) {
-                        dragOffset = value.translation
-                        isDragging = true
+                    // Only respond to strongly horizontal drags to avoid interfering with scrolling
+                    let horizontalAmount = abs(value.translation.width)
+                    let verticalAmount = abs(value.translation.height)
+                    
+                    // More restrictive: horizontal must be at least 2x vertical movement and >20 points
+                    if horizontalAmount > max(verticalAmount * 2, 20) {
+                        withAnimation(.spring(response: 0.3)) {
+                            dragOffset = CGSize(width: value.translation.width, height: 0)
+                            isDragging = true
+                        }
                     }
                 }
                 .onEnded { value in
@@ -398,8 +415,11 @@ struct HabitRowView: View {
                         isDragging = false
                     }
                     
-                    // Any swipe opens the logging page
-                    if abs(value.translation.width) > 50 {
+                    // Only trigger on strongly horizontal swipes
+                    let horizontalAmount = abs(value.translation.width)
+                    let verticalAmount = abs(value.translation.height)
+                    
+                    if horizontalAmount > max(verticalAmount * 2, 50) {
                         inputValue = "\(habit.todayCount)"
                         showLoggingSheet = true
                         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -429,6 +449,7 @@ struct HabitRowView: View {
         }
     }
 }
+
 
 // Helper extension for hex colors
 extension Color {

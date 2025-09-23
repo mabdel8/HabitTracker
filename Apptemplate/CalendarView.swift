@@ -439,9 +439,9 @@ struct ContributionSquare: View {
     
     private var squareColor: Color {
         if isFuture {
-            return Color(.systemGray6)
+            return Color(.systemGray4)
         } else if progress == 0 {
-            return Color(.systemGray6)
+            return Color(.systemGray4)
         } else {
             return color.opacity(0.2 + (progress * 0.6))
         }
