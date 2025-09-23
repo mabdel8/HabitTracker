@@ -39,6 +39,7 @@ struct MainTabView: View {
                     Text("Settings")
                 }
         }
+        .accentColor(.white)
         .sheet(isPresented: $showPaywall) {
             PaywallView(isPresented: $showPaywall)
                 .environmentObject(storeManager)

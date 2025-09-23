@@ -222,28 +222,28 @@ struct CalendarHeatmap: View {
         return dates
     }
     
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Weekday headers
+        VStack(spacing: 4) {
+            // Weekday headers - smaller
             HStack(spacing: 0) {
-                ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
+                ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
                     Text(day)
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
             }
             
-            // Calendar grid
-            LazyVGrid(columns: columns, spacing: 4) {
+            // Calendar grid - tighter
+            LazyVGrid(columns: columns, spacing: 2) {
                 // Empty cells for month start offset
                 ForEach(0..<startOffset, id: \.self) { _ in
                     Rectangle()
                         .fill(Color.clear)
-                        .frame(height: 36)
+                        .frame(height: 24)
                 }
                 
                 // Month dates
@@ -286,16 +286,16 @@ struct CalendarDayCell: View {
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 6)
                 .fill(cellBackgroundColor)
-                .frame(height: 36)
+                .frame(height: 24)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(isToday ? color : Color.clear, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(isToday ? color : Color.clear, lineWidth: 1.5)
                 )
             
             Text("\(Calendar.current.component(.day, from: date))")
-                .font(.caption)
+                .font(.caption2)
                 .fontWeight(isToday ? .bold : .medium)
                 .foregroundStyle(textColor)
         }

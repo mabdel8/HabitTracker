@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import TipKit
 
 @MainActor
 class HabitManager: ObservableObject {
@@ -37,10 +38,16 @@ class HabitManager: ObservableObject {
     // MARK: - Habit Management
     
     func addHabit(_ habit: Habit) {
+        let wasEmpty = habits.isEmpty
         habit.sortOrder = habits.count
         modelContext.insert(habit)
         saveContext()
         loadHabits()
+        
+        // Trigger tip when first habit is added
+        if wasEmpty && !habits.isEmpty {
+            HabitLoggingTip.hasAddedFirstHabit = true
+        }
     }
     
     func deleteHabit(_ habit: Habit) {
@@ -179,7 +186,7 @@ struct HabitTemplate {
 
 extension HabitManager {
     static let predefinedTemplates = [
-        HabitTemplate(name: "Drink Water", icon: "drop.fill", color: "#007AFF", targetCount: 8, unit: "glasses"),
+        HabitTemplate(name: "Drink Water", icon: "drop.fill", color: "#007AFF", targetCount: 80, unit: "oz"),
         HabitTemplate(name: "Exercise", icon: "figure.run", color: "#FF3B30", targetCount: 1, unit: "session"),
         HabitTemplate(name: "Read", icon: "book.fill", color: "#FF9500", targetCount: 30, unit: "minutes"),
         HabitTemplate(name: "Meditate", icon: "brain.head.profile", color: "#AF52DE", targetCount: 10, unit: "minutes"),

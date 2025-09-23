@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import TipKit
 
 struct TodayView: View {
     @EnvironmentObject var habitManager: HabitManager
@@ -36,16 +37,34 @@ struct TodayView: View {
                 .padding()
             }
             .navigationTitle("Today")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+        }
+        .overlay(
+            // Floating Action Button
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
                     Button(action: {
                         showingHabitCreation = true
                     }) {
                         Image(systemName: "plus")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.black)
+                            .frame(width: 56, height: 56)
+                            .background(
+                                Circle()
+                                    .fill(Color.white)
+                                    .shadow(color: Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+                            )
                     }
+                    .scaleEffect(showingHabitCreation ? 0.9 : 1.0)
+                    .animation(.spring(response: 0.3), value: showingHabitCreation)
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 30)
                 }
             }
-        }
+        )
         .sheet(isPresented: $showingHabitCreation) {
             HabitCreationView()
                 .environmentObject(habitManager)
@@ -57,73 +76,75 @@ struct TodayView: View {
     }
     
     private var headerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(Date(), style: .date)
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        
+                        Text(Date(), style: .date)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                     
-                    Text("Your Progress")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                    HStack(spacing: 8) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.title2)
+                            .foregroundStyle(.primary)
+                        
+                        Text("Your Progress")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                    }
                 }
                 
                 Spacer()
                 
                 if totalCount > 0 {
-                    progressRing
+                    VStack(spacing: 4) {
+                        Text("\(completedCount)")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText())
+                            .animation(.easeInOut(duration: 0.3), value: completedCount)
+                        
+                        Text("of \(totalCount)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             
             if totalCount > 0 {
-                progressBar
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    
+                    ProgressView(value: Double(completedCount), total: Double(totalCount))
+                        .progressViewStyle(LinearProgressViewStyle(tint: .green))
+                    
+                    Text("\(Int((Double(completedCount) / Double(totalCount)) * 100))%")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                        .frame(minWidth: 40)
+                }
             }
         }
-        .padding()
+        .padding(20)
         .background(Color(.systemGray6))
-        .cornerRadius(16)
+        .cornerRadius(20)
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color(.systemGray4), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
     
-    private var progressRing: some View {
-        ZStack {
-            Circle()
-                .stroke(Color(.systemGray4), lineWidth: 6)
-                .frame(width: 60, height: 60)
-            
-            Circle()
-                .trim(from: 0, to: totalCount > 0 ? Double(completedCount) / Double(totalCount) : 0)
-                .stroke(Color.green, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                .frame(width: 60, height: 60)
-                .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.5), value: completedCount)
-            
-            Text("\(completedCount)")
-                .font(.headline)
-                .fontWeight(.bold)
-                .contentTransition(.numericText())
-                .animation(.easeInOut(duration: 0.3), value: completedCount)
-        }
-    }
-    
-    private var progressBar: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("\(completedCount) of \(totalCount) completed")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                Text("\(Int((Double(completedCount) / Double(totalCount)) * 100))%")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-            }
-            
-            ProgressView(value: Double(completedCount), total: Double(totalCount))
-                .progressViewStyle(LinearProgressViewStyle(tint: .green))
-        }
-    }
     
     private var emptyStateView: some View {
         VStack(spacing: 20) {
@@ -163,6 +184,13 @@ struct TodayView: View {
             ForEach(habitManager.habits, id: \.id) { habit in
                 HabitRowView(habit: habit)
                     .environmentObject(habitManager)
+                    .popoverTip(HabitLoggingTip(), arrowEdge: .bottom)
+                    .onAppear {
+                        // Trigger the tip parameter for the first habit
+                        if habit == habitManager.habits.first {
+                            HabitLoggingTip.hasAddedFirstHabit = true
+                        }
+                    }
             }
         }
     }
@@ -268,103 +296,94 @@ struct HabitRowView: View {
     }
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Icon
-            Image(systemName: habit.icon)
-                .font(.title2)
-                .foregroundStyle(progressColor)
-                .frame(width: 32, height: 32)
-            
-            // Habit info and progress
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(habit.name)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    
-                    Spacer()
-                    
-                    // Tappable count display
-                    Button(action: {
-                        inputValue = "\(habit.todayCount)"
-                        showLoggingSheet = true
-                    }) {
-                        Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.white)
+        ZStack {
+            // Background swipe feedback indicators
+            HStack {
+                // Left side feedback
+                if isDragging && dragOffset.width > 50 {
+                    VStack(spacing: 2) {
+                        Circle()
+                            .fill(progressColor)
+                            .frame(width: 8, height: 8)
+                        Circle()
+                            .fill(progressColor.opacity(0.6))
+                            .frame(width: 6, height: 6)
+                        Circle()
+                            .fill(progressColor.opacity(0.3))
+                            .frame(width: 4, height: 4)
                     }
+                    .opacity(min(dragOffset.width / 100.0, 1.0))
+                    .transition(.opacity)
                 }
                 
-                ProgressView(value: habit.todayProgress)
-                    .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
+                Spacer()
+                
+                // Right side feedback  
+                if isDragging && dragOffset.width < -50 {
+                    VStack(spacing: 2) {
+                        Circle()
+                            .fill(progressColor.opacity(0.3))
+                            .frame(width: 4, height: 4)
+                        Circle()
+                            .fill(progressColor.opacity(0.6))
+                            .frame(width: 6, height: 6)
+                        Circle()
+                            .fill(progressColor)
+                            .frame(width: 8, height: 8)
+                    }
+                    .opacity(min(abs(dragOffset.width) / 100.0, 1.0))
+                    .transition(.opacity)
+                }
             }
+            .padding(.horizontal, 8)
             
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(.systemGray5), lineWidth: 0.5)
-                )
-        )
-        .scaleEffect(isDragging ? 1.02 : 1.0)
-        .offset(dragOffset)
-        .overlay(
-            // Completion animation overlay
-            ZStack {
-                if showCompletionAnimation {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(progressColor.opacity(0.3))
-                        .scaleEffect(showCompletionAnimation ? 1.05 : 1.0)
-                        .opacity(showCompletionAnimation ? 0 : 1)
-                }
+            // Main habit card content
+            HStack(spacing: 16) {
+                // Icon
+                Image(systemName: habit.icon)
+                    .font(.title2)
+                    .foregroundStyle(progressColor)
+                    .frame(width: 32, height: 32)
                 
-                // Swipe feedback indicators in empty space
-                if isDragging && abs(dragOffset.width) > 50 {
+                // Habit info and progress
+                VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        if dragOffset.width > 0 {
-                            // Left side feedback
-                            VStack(spacing: 2) {
-                                Circle()
-                                    .fill(progressColor)
-                                    .frame(width: 8, height: 8)
-                                Circle()
-                                    .fill(progressColor.opacity(0.6))
-                                    .frame(width: 6, height: 6)
-                                Circle()
-                                    .fill(progressColor.opacity(0.3))
-                                    .frame(width: 4, height: 4)
-                            }
-                            .opacity(min(dragOffset.width / 100.0, 1.0))
-                            .padding(.leading, 20)
-                        }
+                        Text(habit.name)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
                         
                         Spacer()
                         
-                        if dragOffset.width < 0 {
-                            // Right side feedback
-                            VStack(spacing: 2) {
-                                Circle()
-                                    .fill(progressColor.opacity(0.3))
-                                    .frame(width: 4, height: 4)
-                                Circle()
-                                    .fill(progressColor.opacity(0.6))
-                                    .frame(width: 6, height: 6)
-                                Circle()
-                                    .fill(progressColor)
-                                    .frame(width: 8, height: 8)
-                            }
-                            .opacity(min(abs(dragOffset.width) / 100.0, 1.0))
-                            .padding(.trailing, 20)
+                        // Tappable count display - plain white text
+                        Button(action: {
+                            inputValue = "\(habit.todayCount)"
+                            showLoggingSheet = true
+                        }) {
+                            Text("\(habit.todayCount)/\(habit.targetCount) \(habit.unit)")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white)
                         }
                     }
+                    
+                    ProgressView(value: habit.todayProgress)
+                        .progressViewStyle(LinearProgressViewStyle(tint: progressColor))
                 }
             }
-        )
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
+                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+            )
+        }
+        .scaleEffect(isDragging ? 0.98 : 1.0)
+        .offset(dragOffset)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDragging)
         .gesture(
             DragGesture()
                 .onChanged { value in
@@ -407,17 +426,6 @@ struct HabitRowView: View {
                     }
                 }
             )
-        }
-        .onChange(of: habit.isCompletedToday) { _, isCompleted in
-            if isCompleted {
-                withAnimation(.easeOut(duration: 0.6)) {
-                    showCompletionAnimation = true
-                }
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    showCompletionAnimation = false
-                }
-            }
         }
     }
 }

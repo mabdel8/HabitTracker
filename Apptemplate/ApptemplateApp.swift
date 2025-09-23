@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import TipKit
 
 @main
 struct ApptemplateApp: App {
@@ -37,6 +38,9 @@ struct ApptemplateApp: App {
                             .environmentObject(storeManager)
                     }
                     .task {
+                        // Configure TipKit
+                        Tips.configure()
+                        
                         await storeManager.updateSubscriptionStatus()
                         if !storeManager.isSubscribed {
                             showPaywall = true
