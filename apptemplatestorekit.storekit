@@ -32,6 +32,8 @@
   ],
   "settings" : {
     "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
     "_storeKitErrors" : [
       {
         "current" : null,
@@ -114,6 +116,38 @@
           "productID" : "template_weekly",
           "recurringSubscriptionPeriod" : "P1W",
           "referenceName" : "Weekly Plan",
+          "subscriptionGroupID" : "134A01EA",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "6.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "D9B00B16",
+          "introductoryOffer" : {
+            "internalID" : "1402FC50",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "",
+              "displayName" : "",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "ht_monthly_699",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Monthly Plan",
           "subscriptionGroupID" : "134A01EA",
           "type" : "RecurringSubscription",
           "winbackOffers" : [

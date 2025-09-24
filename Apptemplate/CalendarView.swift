@@ -30,7 +30,7 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 4) {
+                LazyVStack(spacing: 2) {
                     viewToggleCard
                     
                     if habitManager.habits.isEmpty {
@@ -127,8 +127,8 @@ struct CalendarView: View {
     
     // MARK: - Habit Card
     private func habitCard(for habit: Habit) -> some View {
-        VStack(spacing: 4) {
-            // Habit header - minimal
+        VStack(spacing: 6) {
+            // Habit header - outside card
             HStack(spacing: 8) {
                 Image(systemName: habit.icon)
                     .font(.title3)
@@ -142,23 +142,27 @@ struct CalendarView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, 8)
-            .padding(.top, 6)
+            .padding(.horizontal, 4)
             
-            // Graph content based on view mode
-            if viewMode == .yearly {
-                ContributionGraph(habit: habit)
-                    .padding(.horizontal, 8)
-            } else {
-                CalendarHeatmap(habit: habit, month: currentMonth)
-                    .padding(.horizontal, 8)
+            // Graph content with card background
+            Group {
+                if viewMode == .yearly {
+                    ContributionGraph(habit: habit)
+                        .frame(height: 60)
+                } else {
+                    CalendarHeatmap(habit: habit, month: currentMonth)
+                }
             }
-            
-            Spacer().frame(height: 2)
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(.systemGray6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(.systemGray4), lineWidth: 1)
+                    )
+            )
         }
-        .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
     

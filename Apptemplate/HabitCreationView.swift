@@ -24,16 +24,27 @@ struct HabitCreationView: View {
     private let availableIcons = [
         "star.fill", "heart.fill", "flame.fill", "bolt.fill", "leaf.fill",
         "drop.fill", "book.fill", "pencil", "figure.run", "brain.head.profile",
-        "bed.double.fill", "figure.walk", "dumbbell.fill", "cup.and.saucer.fill"
+        "bed.double.fill", "figure.walk", "dumbbell.fill", "cup.and.saucer.fill",
+        "sun.max.fill", "moon.fill", "alarm.fill", "timer", "stopwatch.fill",
+        "calendar", "clock.fill", "car.fill", "bicycle", "airplane",
+        "house.fill", "building.2.fill", "figure.indoor.cycle", "carrot.fill", "leaf",
+        "globe", "map.fill", "location.fill", "compass.drawing", "binoculars.fill",
+        "camera.fill", "phone.fill", "headphones", "gamecontroller.fill", "tv.fill"
     ]
     
     private let availableColors = [
         "#007AFF", "#FF3B30", "#FF9500", "#AF52DE", "#34C759",
-        "#5856D6", "#FF2D92", "#32D74B", "#00C7BE", "#FFD60A"
+        "#5856D6", "#FF2D92", "#32D74B", "#00C7BE", "#FFD60A",
+        "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FECA57",
+        "#FF9FF3", "#54A0FF", "#5F27CD", "#00D2D3", "#FF9F43",
+        "#EE5A24", "#009432", "#0652DD", "#9980FA", "#833471",
+        "#EA2027", "#006BA6", "#1B1464", "#5758BB", "#6F1E51"
     ]
     
     private let availableUnits = [
-        "times", "minutes", "hours", "glasses", "pages", "steps", "sessions"
+        "times", "minutes", "hours", "glasses", "pages", "steps", "sessions",
+        "miles", "km", "calories", "cal", "grams", "g", "mg", "ml", "liters", "l",
+        "reps", "sets", "laps", "cups", "oz", "servings", "doses", "chapters"
     ]
     
     var body: some View {
@@ -48,16 +59,14 @@ struct HabitCreationView: View {
     
     private var templatesView: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                headerSection
-                
-                templatesSection
+            VStack(spacing: 20) {
+                popularHabitsSection
                 
                 customOptionSection
             }
             .padding()
         }
-        .navigationTitle("Add Habit")
+        .navigationTitle("Popular Habits")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -68,27 +77,11 @@ struct HabitCreationView: View {
         }
     }
     
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 40))
-                .foregroundStyle(.blue)
-            
-            Text("Choose a habit to track")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text("Start with a popular habit or create your own")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-        }
-    }
     
-    private var templatesSection: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
+    private var popularHabitsSection: some View {
+        LazyVStack(spacing: 12) {
             ForEach(HabitManager.predefinedTemplates, id: \.name) { template in
-                TemplateCard(template: template) {
+                HabitListCard(template: template) {
                     selectedTemplate = template
                     addHabitFromTemplate(template)
                 }
@@ -106,15 +99,19 @@ struct HabitCreationView: View {
                 HStack {
                     Image(systemName: "plus.circle.fill")
                         .font(.title2)
+                        .foregroundStyle(.black)
                     
                     Text("Create Custom Habit")
                         .font(.headline)
+                        .foregroundStyle(.black)
                 }
-                .foregroundStyle(.blue)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                )
             }
         }
     }
@@ -142,50 +139,44 @@ struct HabitCreationView: View {
             }
             
             Section("Appearance") {
-                HStack {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Icon")
-                    Spacer()
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(availableIcons, id: \.self) { icon in
-                                Button(action: {
-                                    customIcon = icon
-                                }) {
-                                    Image(systemName: icon)
-                                        .font(.title2)
-                                        .foregroundStyle(customIcon == icon ? .white : .primary)
-                                        .frame(width: 44, height: 44)
-                                        .background(customIcon == icon ? Color.blue : Color(.systemGray6))
-                                        .cornerRadius(8)
-                                }
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 8) {
+                        ForEach(availableIcons, id: \.self) { icon in
+                            Button(action: {
+                                customIcon = icon
+                            }) {
+                                Image(systemName: icon)
+                                    .font(.title3)
+                                    .foregroundStyle(customIcon == icon ? .white : .primary)
+                                    .frame(width: 40, height: 40)
+                                    .background(customIcon == icon ? Color.blue : Color(.systemGray6))
+                                    .cornerRadius(8)
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(.horizontal, 1)
                     }
                 }
                 
-                HStack {
+                VStack(alignment: .leading, spacing: 8) {
                     Text("Color")
-                    Spacer()
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(availableColors, id: \.self) { color in
-                                Button(action: {
-                                    customColor = color
-                                }) {
-                                    Circle()
-                                        .fill(Color(hex: color) ?? .blue)
-                                        .frame(width: 32, height: 32)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(customColor == color ? Color.primary : Color.clear, lineWidth: 3)
-                                        )
-                                }
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 8) {
+                        ForEach(availableColors, id: \.self) { color in
+                            Button(action: {
+                                customColor = color
+                            }) {
+                                Circle()
+                                    .fill(Color(hex: color) ?? .blue)
+                                    .frame(width: 30, height: 30)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(customColor == color ? Color.primary : Color.clear, lineWidth: 2)
+                                    )
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(.horizontal, 1)
                     }
                 }
             }
@@ -227,32 +218,63 @@ struct HabitCreationView: View {
     }
 }
 
-struct TemplateCard: View {
+struct HabitListCard: View {
     let template: HabitTemplate
     let action: () -> Void
+    @State private var dragOffset = CGSize.zero
+    @State private var isDragging = false
     
     var body: some View {
-        Button(action: action) {
-            VStack(spacing: 12) {
-                Image(systemName: template.icon)
-                    .font(.system(size: 32))
-                    .foregroundStyle(Color(hex: template.color) ?? .blue)
-                
+        HStack(spacing: 16) {
+            // Icon
+            Image(systemName: template.icon)
+                .font(.title2)
+                .foregroundStyle(Color(hex: template.color) ?? .blue)
+                .frame(width: 32, height: 32)
+            
+            // Habit info
+            VStack(alignment: .leading, spacing: 4) {
                 Text(template.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
                 
-                Text("\(template.targetCount) \(template.unit)")
-                    .font(.caption)
+                Text("Goal: \(template.targetCount) \(template.unit)")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
+            
+            Spacer()
+            
+            // Add indicator
+            Image(systemName: "plus.circle.fill")
+                .font(.title3)
+                .foregroundStyle(.secondary)
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+        )
+        .onTapGesture {
+            if !isDragging {
+                action()
+            }
+        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 10)
+                .onChanged { _ in
+                    isDragging = true
+                }
+                .onEnded { _ in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isDragging = false
+                    }
+                }
+        )
     }
 }
 
