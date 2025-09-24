@@ -430,6 +430,10 @@ struct ContributionSquare: View {
         date > Date()
     }
     
+    private var isCurrentWeek: Bool {
+        Calendar.current.isDate(date, equalTo: Date(), toGranularity: .weekOfYear)
+    }
+    
     var body: some View {
         Rectangle()
             .fill(squareColor)
@@ -438,10 +442,12 @@ struct ContributionSquare: View {
     }
     
     private var squareColor: Color {
-        if isFuture {
+        if isFuture && !isCurrentWeek {
+            // Future days in other weeks remain grey
             return Color(.systemGray4)
         } else if progress == 0 {
-            return Color(.systemGray4)
+            // Very subtle hint of habit color for unfilled squares (including future days in current week)
+            return color.opacity(0.08)
         } else {
             return color.opacity(0.2 + (progress * 0.6))
         }
