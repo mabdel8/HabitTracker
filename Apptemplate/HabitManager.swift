@@ -173,13 +173,16 @@ struct HabitTemplate {
     let targetCount: Int
     let unit: String
     
-    func createHabit() -> Habit {
+    func createHabit(customTarget: Int? = nil, reminderEnabled: Bool = false, reminderTime: Date? = nil, reminderDays: [Weekday] = []) -> Habit {
         return Habit(
             name: name,
             icon: icon,
             color: color,
-            targetCount: targetCount,
-            unit: unit
+            targetCount: customTarget ?? targetCount,
+            unit: unit,
+            reminderEnabled: reminderEnabled,
+            reminderTime: reminderTime,
+            reminderDays: reminderDays
         )
     }
 }

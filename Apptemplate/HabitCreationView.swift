@@ -20,6 +20,10 @@ struct HabitCreationView: View {
     @State private var customColor = "#007AFF"
     @State private var customTarget = 1
     @State private var customUnit = "times"
+    @State private var reminderEnabled = false
+    @State private var reminderTime = Date()
+    @State private var selectedDays: Set<Weekday> = []
+    @State private var showingReminderConfig = false
     
     private let availableIcons = [
         "star.fill", "heart.fill", "flame.fill", "bolt.fill", "leaf.fill",
@@ -55,6 +59,25 @@ struct HabitCreationView: View {
                 customHabitView
             }
         }
+        .sheet(isPresented: $showingReminderConfig) {
+            if let template = selectedTemplate {
+                ReminderConfigView(
+                    habitName: template.name,
+                    defaultTarget: template.targetCount,
+                    unit: template.unit,
+                    reminderEnabled: $reminderEnabled,
+                    reminderTime: $reminderTime,
+                    selectedDays: $selectedDays,
+                    onSave: { customTarget in
+                        addHabitFromTemplate(template, customTarget: customTarget)
+                        showingReminderConfig = false
+                    },
+                    onCancel: {
+                        showingReminderConfig = false
+                    }
+                )
+            }
+        }
     }
     
     private var templatesView: some View {
@@ -83,7 +106,7 @@ struct HabitCreationView: View {
             ForEach(HabitManager.predefinedTemplates, id: \.name) { template in
                 HabitListCard(template: template) {
                     selectedTemplate = template
-                    addHabitFromTemplate(template)
+                    showingReminderConfig = true
                 }
             }
         }
@@ -180,6 +203,40 @@ struct HabitCreationView: View {
                     }
                 }
             }
+            
+            Section("Reminders") {
+                Toggle("Enable Reminders", isOn: $reminderEnabled)
+                
+                if reminderEnabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Days")
+                        
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                            ForEach(Weekday.allCases, id: \.self) { day in
+                                Button(action: {
+                                    if selectedDays.contains(day) {
+                                        selectedDays.remove(day)
+                                    } else {
+                                        selectedDays.insert(day)
+                                    }
+                                }) {
+                                    Text(day.shortName)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(selectedDays.contains(day) ? .white : .primary)
+                                        .frame(width: 32, height: 32)
+                                        .background(selectedDays.contains(day) ? Color.blue : Color(.systemGray6))
+                                        .cornerRadius(8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                    }
+                    
+                    DatePicker("Reminder Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                        .datePickerStyle(.compact)
+                }
+            }
         }
         .navigationTitle("Custom Habit")
         .navigationBarTitleDisplayMode(.inline)
@@ -199,9 +256,25 @@ struct HabitCreationView: View {
         }
     }
     
-    private func addHabitFromTemplate(_ template: HabitTemplate) {
-        let habit = template.createHabit()
+    private func addHabitFromTemplate(_ template: HabitTemplate, customTarget: Int? = nil) {
+        let habit = template.createHabit(
+            customTarget: customTarget,
+            reminderEnabled: reminderEnabled,
+            reminderTime: reminderEnabled ? reminderTime : nil,
+            reminderDays: reminderEnabled ? Array(selectedDays) : []
+        )
         habitManager.addHabit(habit)
+        
+        // Schedule notification if enabled
+        if reminderEnabled {
+            Task {
+                let notificationManager = NotificationManager.shared
+                if await notificationManager.requestPermission() {
+                    notificationManager.scheduleHabitReminder(for: habit)
+                }
+            }
+        }
+        
         dismiss()
     }
     
@@ -211,9 +284,23 @@ struct HabitCreationView: View {
             icon: customIcon,
             color: customColor,
             targetCount: customTarget,
-            unit: customUnit
+            unit: customUnit,
+            reminderEnabled: reminderEnabled,
+            reminderTime: reminderEnabled ? reminderTime : nil,
+            reminderDays: reminderEnabled ? Array(selectedDays) : []
         )
         habitManager.addHabit(habit)
+        
+        // Schedule notification if enabled
+        if reminderEnabled {
+            Task {
+                let notificationManager = NotificationManager.shared
+                if await notificationManager.requestPermission() {
+                    notificationManager.scheduleHabitReminder(for: habit)
+                }
+            }
+        }
+        
         dismiss()
     }
 }
@@ -275,6 +362,185 @@ struct HabitListCard: View {
                     }
                 }
         )
+    }
+}
+
+struct ReminderConfigView: View {
+    let habitName: String
+    let defaultTarget: Int
+    let unit: String
+    @Binding var reminderEnabled: Bool
+    @Binding var reminderTime: Date
+    @Binding var selectedDays: Set<Weekday>
+    let onSave: (Int) -> Void
+    let onCancel: () -> Void
+    
+    @State private var customTarget: Int
+    
+    init(habitName: String, defaultTarget: Int, unit: String, reminderEnabled: Binding<Bool>, reminderTime: Binding<Date>, selectedDays: Binding<Set<Weekday>>, onSave: @escaping (Int) -> Void, onCancel: @escaping () -> Void) {
+        self.habitName = habitName
+        self.defaultTarget = defaultTarget
+        self.unit = unit
+        self._reminderEnabled = reminderEnabled
+        self._reminderTime = reminderTime
+        self._selectedDays = selectedDays
+        self.onSave = onSave
+        self.onCancel = onCancel
+        self._customTarget = State(initialValue: defaultTarget)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Goal") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "target")
+                                .font(.title2)
+                                .foregroundStyle(.green)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Daily Target")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                
+                                Text("Customize your goal amount")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                        }
+                        
+                        HStack {
+                            Text("Target")
+                                .font(.subheadline)
+                                .foregroundStyle(.primary)
+                            
+                            Spacer()
+                            
+                            HStack(spacing: 8) {
+                                Button(action: {
+                                    if customTarget > 1 {
+                                        customTarget -= 1
+                                    }
+                                }) {
+                                    Image(systemName: "minus.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(customTarget > 1 ? .blue : .gray)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .disabled(customTarget <= 1)
+                                
+                                TextField("Target", value: $customTarget, format: .number)
+                                    .keyboardType(.numberPad)
+                                    .multilineTextAlignment(.center)
+                                    .frame(width: 60)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(8)
+                                
+                                Button(action: {
+                                    customTarget += 1
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(.blue)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Text(unit)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .frame(minWidth: 40, alignment: .leading)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "bell.fill")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Set Reminder")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                
+                                Text("Get notified to \(habitName.lowercased())")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Toggle("", isOn: $reminderEnabled)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                if reminderEnabled {
+                    Section("Days") {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                            ForEach(Weekday.allCases, id: \.self) { day in
+                                Button(action: {
+                                    if selectedDays.contains(day) {
+                                        selectedDays.remove(day)
+                                    } else {
+                                        selectedDays.insert(day)
+                                    }
+                                }) {
+                                    VStack(spacing: 4) {
+                                        Text(day.shortName)
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                        
+                                        Text(day.fullName.prefix(3).uppercased())
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .foregroundStyle(selectedDays.contains(day) ? .white : .primary)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(selectedDays.contains(day) ? Color.blue : Color(.systemGray6))
+                                    .cornerRadius(8)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    
+                    Section("Time") {
+                        DatePicker("Reminder Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                            .datePickerStyle(.wheel)
+                    }
+                }
+            }
+            .navigationTitle("Reminder")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        onCancel()
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Add Habit") {
+                        onSave(customTarget)
+                    }
+                    .fontWeight(.medium)
+                    .disabled(reminderEnabled && selectedDays.isEmpty)
+                }
+            }
+        }
     }
 }
 

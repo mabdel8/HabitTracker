@@ -20,10 +20,15 @@ final class Habit {
     var isArchived: Bool
     var sortOrder: Int         // For custom ordering
     
+    // Reminder properties
+    var reminderEnabled: Bool
+    var reminderTime: Date?
+    var reminderDays: [Weekday]
+    
     // Relationships
     @Relationship(deleteRule: .cascade) var entries: [HabitEntry]
     
-    init(name: String, icon: String, color: String, targetCount: Int, unit: String, sortOrder: Int = 0) {
+    init(name: String, icon: String, color: String, targetCount: Int, unit: String, sortOrder: Int = 0, reminderEnabled: Bool = false, reminderTime: Date? = nil, reminderDays: [Weekday] = []) {
         self.id = UUID()
         self.name = name
         self.icon = icon
@@ -33,6 +38,9 @@ final class Habit {
         self.createdAt = Date()
         self.isArchived = false
         self.sortOrder = sortOrder
+        self.reminderEnabled = reminderEnabled
+        self.reminderTime = reminderTime
+        self.reminderDays = reminderDays
         self.entries = []
     }
     
